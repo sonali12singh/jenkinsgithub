@@ -1,0 +1,9 @@
+ Error: Missing resource instance key
+│ 
+│   on main.tf line 611, in resource "aws_db_subnet_group" "default":
+│  611:     data.aws_subnet.backup.id
+│ 
+│ Because data.aws_subnet.backup has "count" set, its attributes must be accessed on specific instances.
+│ 
+│ For example, to correlate with indices of a referring resource, use:
+│     data.aws_subnet.backup[count.index]
