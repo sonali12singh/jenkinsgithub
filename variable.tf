@@ -6,19 +6,36 @@ variable "ssh_pub" {
   type        = string
   description = "SSH public key in OpenSSH format. Mandatory variable, must be unique. No default value."
 }
+variable "vpc_name" {
+  type        = string
+  default     = "silicon-designer"
+  description = "VPC name. Also applies as the value for `env` tag (can be used with Cost Explorer) and gets embedded into resource names."
+}
+
 variable "vpc_id" {
   type        = string
   description = "ID of existing VPC"
+}
+variable "vpc_cidr_block" {
+  type        = string
+  default     = null
+  description = "CIDR block to use within VPC. The recommended way to assign CIDR block for new installations. Please note that this CIDR block will be divided into two subnets of equal size to alow for RDS creation. Even though RDS is optional, dynamic subnet management is not supported to avoid accidential resource replacement that might lead to data loss. Size your CIDR block accordingly."
 }
 variable "standalone_subnet_id" {
   type        = string
   description = "ID of existing primary subnet (for admin/agent/chrome)"
 }
+variable "standalone_subnet_cidr_block" {}
+variable "standalone_subnet_availability_zone" {}
+
 variable "backup_subnet_id" {
   type        = string
   description = "ID of existing backup subnet (for RDS)"
 }
-variable "route_table_id" {
+variable "backup_subnet_cidr_block" {}
+variable "backup_subnet_availability_zone" {}
+
+variable "route_table" {
   type        = string
   description = "ID of existing route table to use"
 }
@@ -27,22 +44,8 @@ variable "igw_id" {
   description = "ID of existing Internet Gateway"
 }
 
-variable "vpc_name" {
-  type        = string
-  default     = "silicon-designer"
-  description = "VPC name. Also applies as the value for `env` tag (can be used with Cost Explorer) and gets embedded into resource names."
-}
 
-variable "vpc_cidr" {
-  type        = string
-  default     = null
-  description = "CIDR block to use within VPC. The recommended way to assign CIDR block for new installations. Please note that this CIDR block will be divided into two subnets of equal size to alow for RDS creation. Even though RDS is optional, dynamic subnet management is not supported to avoid accidential resource replacement that might lead to data loss. Size your CIDR block accordingly."
-}
-variable "trusted_admin_cidr" {
-  type        = list(string)
-  description = "List of trusted CIDR blocks for admin (SSH/RDP) access"
-  default     = ["203.0.113.15/32"] # <-- Replace with your actual IPs
-}
+
 
 
 variable "vpc_region" {
@@ -110,11 +113,11 @@ variable "admin_data_volume_size" {
 }
 
 variable "admin_data_volume_iops" {
-  default     = 3000
+  default = 3000
 }
 
 variable "admin_data_volume_throughput" {
-  default     = 125
+  default = 125
 }
 
 variable "admin_data_volume_blkdev" {
@@ -228,7 +231,7 @@ variable "dlm_tags_to_add" {
 
 variable "admin_fqdn" {
   type        = string
-  default     = "~ # REQUIRED: Admin UI domain name, procure DNS A record before proceeding"
+  default     = "~"# REQUIRED: Admin UI domain name, procure DNS A record before proceeding"
   description = "Not used by Terraform directly. Optional. This value will be substituted when generating Ansible inventory template."
 }
 
