@@ -1,4 +1,3 @@
-
 locals {
   vpc_cidr_block       = var.vpc_cidr_block
   sl_subnet_bit_size   = 32 - tonumber(split("/", var.standalone_subnet_cidr_block)[1])
@@ -102,13 +101,15 @@ resource "aws_security_group" "admin" {
   }
   # Allow HTTP/HTTPS from public or restricted as needed
 
-  # ingress {
-  #   from_port   = 80
-  #   to_port     = 80
-  #   protocol    = "tcp"
-  #   cidr_blocks = ["0.0.0.0/0"] # change if not public-facing
-  #   description = "Public http"
-  # }
+  # Allow RDP (TCP 3389) from specified CIDRs
+  ingress {
+    from_port   = 3389
+    to_port     = 3389
+    protocol    = "tcp"
+    cidr_blocks = ["10.64.0.0/16", "172.21.150.0/24"]
+    description = "Allow RDP from specific CIDRs"
+  }
+
 
   # ingress {
   #   from_port   = 443
@@ -302,7 +303,14 @@ resource "aws_security_group" "rds" {
     security_groups = [aws_security_group.admin.id, aws_security_group.agent.id]
     description     = "MySQL From agent and admin nodes"
   }
-
+ # Allow RDP (TCP 3389) from specified CIDRs
+  ingress {
+    from_port   = 3389
+    to_port     = 3389
+    protocol    = "tcp"
+    cidr_blocks = ["10.64.0.0/16", "172.21.150.0/24"]
+    description = "Allow RDP from specific CIDRs"
+  }
   # egress {
   #   from_port   = 0
   #   to_port     = 0
