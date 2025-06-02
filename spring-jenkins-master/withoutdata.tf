@@ -680,5 +680,7 @@ resource "aws_dlm_lifecycle_policy" "instance_snapshots" {
 
   tags = {
     env = var.vpc_name
+
+
   }
 }
