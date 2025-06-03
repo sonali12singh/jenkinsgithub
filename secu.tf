@@ -17,26 +17,26 @@ resource "aws_eip" "admin" {
 
 #--- if the exixting vpc has  a DHCP option set that sets domain name and dns server we can skip
 #resource "aws_vpc_dhcp_options" "standalone" {
- # domain_name         = var.local_zone
-  #domain_name_servers = ["AmazonProvidedDNS"]
+# domain_name         = var.local_zone
+#domain_name_servers = ["AmazonProvidedDNS"]
 
-  #tags = {
-   # Name = var.vpc_name
-    #env  = var.vpc_name
+#tags = {
+# Name = var.vpc_name
+#env  = var.vpc_name
 #  }
 #}
 
 #resource "aws_vpc_dhcp_options_association" "standalone" {
- # vpc_id          = var.vpc_id
-  #dhcp_options_id = aws_vpc_dhcp_options.standalone.id
+# vpc_id          = var.vpc_id
+#dhcp_options_id = aws_vpc_dhcp_options.standalone.id
 #}
 #----DNS and Route53 Resources
-resource "aws_route53_zone" "int" {
-  name = var.local_zone
-  vpc {
-    vpc_id = var.vpc_id
-  }
-}
+# resource "aws_route53_zone" "int" {
+#   name = var.local_zone
+#   vpc {
+#     vpc_id = var.vpc_id
+#   }
+# }
 # resource "aws_route" "default_gw" {
 #   route_table_id         = var.route_table_id
 #   destination_cidr_block = "0.0.0.0/0"
@@ -44,8 +44,8 @@ resource "aws_route53_zone" "int" {
 # }
 
 resource "aws_route53_record" "admin" {
-  zone_id = aws_route53_zone.int.zone_id
-  name    = "admin.${var.local_zone}"
+  zone_id = var.route53_zone_id
+  name    = "admin.franklin-madison.com"
   type    = "A"
   ttl     = "300"
   records = [aws_instance.admin.private_ip]
@@ -53,8 +53,8 @@ resource "aws_route53_record" "admin" {
 
 resource "aws_route53_record" "agent" {
   count   = var.agent_count
-  zone_id = aws_route53_zone.int.zone_id
-  name    = "agent${count.index}.${var.local_zone}"
+  zone_id = var.route53_zone_id
+  name    = "agent${count.index}.franklin-madison.com"
   type    = "A"
   ttl     = "300"
   records = [aws_instance.agent[count.index].private_ip]
@@ -62,8 +62,8 @@ resource "aws_route53_record" "agent" {
 
 # resource "aws_route53_record" "chrome" {
 #   count   = var.chrome_count
-#   zone_id = aws_route53_zone.int.zone_id
-#   name    = "agent-chrome${count.index}.${var.local_zone}"
+#   zone_id = var.route53_zone_id
+#   name    = "agent-chrome${count.index}.franklin-madison.com"
 #   type    = "A"
 #   ttl     = "300"
 #   records = [aws_instance.chrome[count.index].private_ip]
@@ -71,11 +71,11 @@ resource "aws_route53_record" "agent" {
 # }
 
 resource "aws_route53_record" "discovery" {
-  zone_id = aws_route53_zone.int.zone_id
-  name    = "admin.${var.local_zone}"
+  zone_id = var.route53_zone_id
+  name    = "admin.franklin-madison.com"
   type    = "TXT"
   ttl     = "300"
-  records = ["http://admin.${var.local_zone}"]
+  records = ["http://admin.franklin-madison.com"]
 }
 #----Security Groups
 resource "aws_security_group" "admin" {
@@ -85,17 +85,17 @@ resource "aws_security_group" "admin" {
 
   # ICMP only from within VPC 
   ingress {
-    from_port = -1
-    to_port   = -1
-    protocol  = "icmp"
+    from_port   = -1
+    to_port     = -1
+    protocol    = "icmp"
     cidr_blocks = [var.vpc_cidr_block]
     description = "ICMP from vpc"
   }
   #----ssh only from trusted admin CIDR
   ingress {
-    from_port = 22
-    to_port   = 22
-    protocol  = "tcp"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
     cidr_blocks = [var.vpc_cidr_block]
     description = "Secure SHell"
   }
@@ -146,9 +146,9 @@ resource "aws_security_group" "agent" {
   vpc_id      = var.vpc_id
 
   ingress {
-    from_port = -1
-    to_port   = -1
-    protocol  = "icmp"
+    from_port   = -1
+    to_port     = -1
+    protocol    = "icmp"
     cidr_blocks = [var.vpc_cidr_block]
     description = "ICMP"
   }
@@ -397,7 +397,7 @@ resource "aws_ebs_volume" "admin_data" {
 resource "aws_volume_attachment" "admin_data" {
   count       = var.admin_data_volume_size == 0 ? 0 : 1
   device_name = var.admin_data_volume_blkdev
-  volume_id = aws_ebs_volume.admin_data[0].id
+  volume_id   = aws_ebs_volume.admin_data[0].id
   instance_id = aws_instance.admin.id
 }
 
@@ -547,23 +547,11 @@ resource "aws_route" "peers" {
   transit_gateway_id     = var.bridge_tgw
 }
 #RDS CONFIGURATION
-# This section creates an RDS instance if the allocated storage is greater than 0
-resource "aws_db_subnet_group" "default" {
-  name       = replace(var.vpc_name, ".", "")
-  subnet_ids = [var.standalone_subnet_id, var.backup_subnet_id]
-  tags = {
-    Name = "${var.vpc_name}-rds"
-    env  = var.vpc_name
-  }
-}
-# resource "aws_db_subnet_group" "default" {
-#   count      = var.rds_allocated_storage == 0 ? 0 : 1
-#   name       = replace(var.vpc_name, ".", "")
-#   subnet_ids = [var.standalone_subnet_id, data.aws_subnet.backup[0].id]
-# }
 
 resource "aws_db_instance" "default" {
-  count                 = var.rds_allocated_storage > 0 ? 1 : 0
+  # count                 = var.rds_allocated_storage > 0 ? 1 : 0
+  count = var.rds_allocated_storage == 0 ? 0 : 1
+
   allocated_storage     = var.rds_allocated_storage
   max_allocated_storage = var.rds_maximum_storage
   engine                = "mariadb"
@@ -582,7 +570,7 @@ resource "aws_db_instance" "default" {
   deletion_protection     = var.rds_deletion_protection
   maintenance_window      = var.rds_maintenance_window
 
-  db_subnet_group_name = aws_db_subnet_group.default.name
+  db_subnet_group_name = var.rds_subnet_group_name
   vpc_security_group_ids = [
     aws_security_group.rds[0].id,
     aws_security_group.rds_exceptions.id
