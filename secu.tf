@@ -16,20 +16,20 @@ resource "aws_eip" "admin" {
 }
 
 #--- if the exixting vpc has  a DHCP option set that sets domain name and dns server we can skip
-resource "aws_vpc_dhcp_options" "standalone" {
-  domain_name         = var.local_zone
-  domain_name_servers = ["AmazonProvidedDNS"]
+#resource "aws_vpc_dhcp_options" "standalone" {
+ # domain_name         = var.local_zone
+  #domain_name_servers = ["AmazonProvidedDNS"]
 
-  tags = {
-    Name = var.vpc_name
-    env  = var.vpc_name
-  }
-}
+  #tags = {
+   # Name = var.vpc_name
+    #env  = var.vpc_name
+#  }
+#}
 
-resource "aws_vpc_dhcp_options_association" "standalone" {
-  vpc_id          = var.vpc_id
-  dhcp_options_id = aws_vpc_dhcp_options.standalone.id
-}
+#resource "aws_vpc_dhcp_options_association" "standalone" {
+ # vpc_id          = var.vpc_id
+  #dhcp_options_id = aws_vpc_dhcp_options.standalone.id
+#}
 #----DNS and Route53 Resources
 resource "aws_route53_zone" "int" {
   name = var.local_zone
@@ -303,14 +303,7 @@ resource "aws_security_group" "rds" {
     security_groups = [aws_security_group.admin.id, aws_security_group.agent.id]
     description     = "MySQL From agent and admin nodes"
   }
- # Allow RDP (TCP 3389) from specified CIDRs
-  ingress {
-    from_port   = 3389
-    to_port     = 3389
-    protocol    = "tcp"
-    cidr_blocks = ["10.64.0.0/16", "172.21.150.0/24"]
-    description = "Allow RDP from specific CIDRs"
-  }
+
   # egress {
   #   from_port   = 0
   #   to_port     = 0
