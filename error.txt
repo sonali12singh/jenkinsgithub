@@ -1,9 +1,41 @@
- Error: Missing resource instance key
-│ 
-│   on main.tf line 611, in resource "aws_db_subnet_group" "default":
-│  611:     data.aws_subnet.backup.id
-│ 
-│ Because data.aws_subnet.backup has "count" set, its attributes must be accessed on specific instances.
-│ 
-│ For example, to correlate with indices of a referring resource, use:
-│     data.aws_subnet.backup[count.index]
+Error: creating Route53 Hosted Zone (staging.home.arpa): operation error Route 53: CreateHostedZone, https response error StatusCode: 400, RequestID: 8fd452f8-94b1-4f57-91e8-f3bdd990f2e2, InvalidVPCId: The VPC: vpc-0051d323df13c7db3 in region us-east-1 that you provided is not authorized to make the association.
+13:09:25 
+13:09:25   on main.tf line 35, in resource "aws_route53_zone" "int":
+13:09:25   35: resource "aws_route53_zone" "int" {
+13:09:25 
+13:09:25 
+13:09:25 
+13:09:25 Error: creating Security Group (paginator-admin-node): operation error EC2: CreateSecurityGroup, https response error StatusCode: 400, RequestID: 02c1e806-09c3-4061-9e6b-0af00e6c17d2, api error InvalidVpcID.NotFound: The vpc ID 'vpc-0051d323df13c7db3' does not exist
+13:09:25 
+13:09:25   on main.tf line 82, in resource "aws_security_group" "admin":
+13:09:25   82: resource "aws_security_group" "admin" {
+13:09:25 
+13:09:25 
+13:09:25 
+13:09:25 Error: creating Security Group (ec2_exceptions): operation error EC2: CreateSecurityGroup, https response error StatusCode: 400, RequestID: 28debe82-795e-4182-bb69-c72f2fe185f7, api error InvalidVpcID.NotFound: The vpc ID 'vpc-0051d323df13c7db3' does not exist
+13:09:25 
+13:09:25   on main.tf line 229, in resource "aws_security_group" "ec2_exceptions":
+13:09:25  229: resource "aws_security_group" "ec2_exceptions" {
+13:09:25 
+13:09:25 
+13:09:25 
+13:09:25 Error: creating Security Group (rds_exceptions): operation error EC2: CreateSecurityGroup, https response error StatusCode: 400, RequestID: d65cffd4-75aa-4959-a8c6-99f8c09ff3ef, api error InvalidVpcID.NotFound: The vpc ID 'vpc-0051d323df13c7db3' does not exist
+13:09:25 
+13:09:25   on main.tf line 258, in resource "aws_security_group" "rds_exceptions":
+13:09:25  258: resource "aws_security_group" "rds_exceptions" {
+13:09:25 
+13:09:25 
+13:09:25 
+13:09:25 Error: creating RDS DB Subnet Group (paginator): operation error RDS: CreateDBSubnetGroup, https response error StatusCode: 400, RequestID: 3df1a163-5ef3-4cd2-834c-d1325380ebc1, api error InvalidParameterValue: Some input subnets in :[subnet-076a071fa0723c80e, subnet-0ed61b6beb807094e] are invalid.
+13:09:25 
+13:09:25   on main.tf line 552, in resource "aws_db_subnet_group" "default":
+13:09:25  552: resource "aws_db_subnet_group" "default" {
+13:09:25 
+13:09:25 
+13:09:25 
+13:09:25 Error: creating DLM Lifecycle Policy: operation error DLM: CreateLifecyclePolicy, https response error StatusCode: 403, RequestID: 27b1b61f-e765-4526-a7bb-080aa05268a7, api error AccessDeniedException: User: arn:aws:sts::634621569833:assumed-role/terraform-execution-role/terraform_deploy is not authorized to perform: dlm:TagResource on resource: arn:aws:dlm:us-east-1:634621569833:policy/*
+13:09:25 
+13:09:25   on main.tf line 622, in resource "aws_dlm_lifecycle_policy" "instance_snapshots":
+13:09:25  622: resource "aws_dlm_lifecycle_policy" "instance_snapshots" {
+13:09:25 
+13:09:25 
