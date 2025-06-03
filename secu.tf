@@ -7,13 +7,13 @@ provider "aws" {
   region = var.vpc_region
 }
 #---Networking Resources 
-resource "aws_eip" "admin" {
-  # domain = "vpc"
-  tags = {
-    Name = "${var.vpc_name}-admin"
-    env  = var.vpc_name
-  }
-}
+# resource "aws_eip" "admin" {
+#   # domain = "vpc"
+#   tags = {
+#     Name = "${var.vpc_name}-admin"
+#     env  = var.vpc_name
+#   }
+# }
 
 #--- if the exixting vpc has  a DHCP option set that sets domain name and dns server we can skip
 #resource "aws_vpc_dhcp_options" "standalone" {
@@ -535,10 +535,10 @@ resource "aws_instance" "agent" {
 #   }
 # }
 
-resource "aws_eip_association" "admin" {
-  instance_id   = aws_instance.admin.id
-  allocation_id = aws_eip.admin.id
-}
+# resource "aws_eip_association" "admin" {
+#   instance_id   = aws_instance.admin.id
+#   allocation_id = aws_eip.admin.id
+# }
 
 resource "aws_route" "peers" {
   count                  = length(var.bridge_pxs)
