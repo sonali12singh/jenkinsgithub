@@ -7,13 +7,13 @@ provider "aws" {
   region = var.vpc_region
 }
 #---Networking Resources 
-# resource "aws_eip" "admin" {
-#   # domain = "vpc"
-#   tags = {
-#     Name = "${var.vpc_name}-admin"
-#     env  = var.vpc_name
-#   }
-# }
+resource "aws_eip" "admin" {
+  # domain = "vpc"
+  tags = {
+    Name = "${var.vpc_name}-admin"
+    env  = var.vpc_name
+  }
+}
 
 #--- if the exixting vpc has  a DHCP option set that sets domain name and dns server we can skip
 #resource "aws_vpc_dhcp_options" "standalone" {
@@ -134,10 +134,12 @@ resource "aws_security_group" "admin" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = {
-    Name = "${var.vpc_name}-admin-node"
-    env  = var.vpc_name
-  }
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.vpc_name}-admin-security-group"
+    }
+  )
 }
 
 resource "aws_security_group" "agent" {
@@ -176,11 +178,12 @@ resource "aws_security_group" "agent" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
-  tags = {
-    Name = "${var.vpc_name}-agent-node"
-    env  = var.vpc_name
-  }
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.vpc_name}-agent-node-security"
+    }
+  )
 }
 
 # resource "aws_security_group" "chrome" {
@@ -249,9 +252,12 @@ resource "aws_security_group" "ec2_exceptions" {
     ignore_changes = [ingress]
   }
 
-  tags = {
-    env = var.vpc_name
-  }
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.vpc_name}-ec2_exception-security-group"
+    }
+  )
 }
 # RDS Exception Security Group (for manual exceptions, not managed by Terraform)
 resource "aws_security_group" "rds_exceptions" {
@@ -278,9 +284,12 @@ resource "aws_security_group" "rds_exceptions" {
     ignore_changes = [ingress]
   }
 
-  tags = {
-    env = var.vpc_name
-  }
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.vpc_name}-rds_exception-security-group"
+    }
+  )
 }
 resource "aws_security_group" "rds" {
   count       = var.rds_allocated_storage == 0 ? 0 : 1
@@ -311,10 +320,12 @@ resource "aws_security_group" "rds" {
   #   cidr_blocks = ["0.0.0.0/0"]
   # }
 
-  tags = {
-    Name = "${var.vpc_name}-rds"
-    env  = var.vpc_name
-  }
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.vpc_name}-rds-security-group"
+    }
+  )
 }
 
 resource "aws_key_pair" "ansible" {
@@ -361,12 +372,12 @@ EOF
   }
 
   tags = merge(
+    var.tags,
     { DLMBackupTarget = var.vpc_name },
     {
-      Name = "${var.vpc_name}-admin"
-      env  = var.vpc_name
-      App  = "Nucleus"
-      OS   = "Linux"
+      Infrastructure = "Compute"
+      Name           = "EC2-WIN-Paginator-Admin"
+      PatchGroup     = "Linux"
     }
   )
 
@@ -376,7 +387,6 @@ EOF
 
   volume_tags = {
     Name = "${var.vpc_name}-admin"
-    env  = var.vpc_name
   }
 }
 
@@ -388,10 +398,13 @@ resource "aws_ebs_volume" "admin_data" {
   iops              = var.admin_data_volume_iops
   throughput        = var.admin_data_volume_throughput
 
-  tags = {
-    Name = "${var.vpc_name}-admin"
-    env  = var.vpc_name
-  }
+  tags = merge(
+    var.tags,
+    {
+      Name = "${var.vpc_name}-admin"
+
+    }
+  )
 }
 
 resource "aws_volume_attachment" "admin_data" {
@@ -426,15 +439,15 @@ resource "aws_instance" "agent" {
     throughput            = var.agent_diskthroughput
     delete_on_termination = "false"
   }
-
-  tags = merge(
+tags = merge(
+    var.tags,
     { DLMBackupTarget = var.vpc_name },
     {
-      Name = "${var.vpc_name}-agent-${count.index}"
-      App  = "Nucleus"
-      OS   = "Windows"
-      env  = var.vpc_name
+      Infrastructure = "Compute"
+      Name = "EC2-WIN-Paginator-agent-${count.index}"
+      PatchGroup     = "Windows"
     }
+  
   )
 
   lifecycle {
@@ -443,8 +456,7 @@ resource "aws_instance" "agent" {
 
   volume_tags = {
     Name = "${var.vpc_name}-agent-${count.index}"
-    env  = var.vpc_name
-  }
+      }
 }
 
 # resource "aws_instance" "chrome" {
@@ -514,15 +526,15 @@ resource "aws_instance" "agent" {
 #   message: "Finalizing setup with reboot"
 #   timeout: 10
 # EOF
-
-#   tags = merge(
+# tags = merge(
+#     var.tags,
 #     { DLMBackupTarget = var.vpc_name },
 #     {
-#       Name = "${var.vpc_name}-agent-chrome-${count.index}"
-#       App  = "Nucleus"
-#       OS   = "Windows"
-#       env  = var.vpc_name
+#       Infrastructure = "Compute"
+#       Name = "EC2-WIN-Paginator-agent-chrome-${count.index}"
+#       PatchGroup     = "Windows"
 #     }
+  
 #   )
 
 #   lifecycle {
@@ -531,14 +543,13 @@ resource "aws_instance" "agent" {
 
 #   volume_tags = {
 #     Name = "${var.vpc_name}-agent-chrome-${count.index}"
-#     env  = var.vpc_name
 #   }
 # }
 
-# resource "aws_eip_association" "admin" {
-#   instance_id   = aws_instance.admin.id
-#   allocation_id = aws_eip.admin.id
-# }
+resource "aws_eip_association" "admin" {
+  instance_id   = aws_instance.admin.id
+  allocation_id = aws_eip.admin.id
+}
 
 resource "aws_route" "peers" {
   count                  = length(var.bridge_pxs)
@@ -576,11 +587,9 @@ resource "aws_db_instance" "default" {
     aws_security_group.rds_exceptions.id
   ]
   final_snapshot_identifier = "final-snapshot-${replace(var.vpc_name, ".", "")}"
+tags =  var.tags
+} 
 
-  tags = {
-    env = var.vpc_name
-  }
-}
 
 resource "aws_iam_role" "dlm_lifecycle_role" {
   name = "DLMRole-${replace(var.vpc_name, ".", "")}"
@@ -638,7 +647,6 @@ resource "aws_dlm_lifecycle_policy" "instance_snapshots" {
     )
   }
 
-  tags = {
-    env = var.vpc_name
-  }
+  tags = var.tags
+  
 }
